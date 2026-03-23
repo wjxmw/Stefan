@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>学生信息查询系统</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+
+    <!-- Tailwind配置 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#165DFF',
+                        secondary: '#36CFC9',
+                        accent: '#722ED1',
+                        neutral: '#F3F4F6',
+                        'neutral-dark': '#4E5969',
+                    },
+                    fontFamily: {
+                        inter: ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+
+    <!-- 自定义工具类 -->
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .btn-primary {
+                @apply bg-primary text-white px-4 py-2 rounded-lg transition-all hover:bg-primary/90 active:bg-primary/80 shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-primary/50;
+            }
+            .btn-secondary {
+                @apply bg-neutral text-neutral-dark px-4 py-2 rounded-lg transition-all hover:bg-neutral/80 active:bg-neutral/70 shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-neutral/50;
+            }
+            .input-field {
+                @apply w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all;
+            }
+            .card {
+                @apply bg-white rounded-xl shadow-md p-4 transition-all hover:shadow-lg;
+            }
+            .table-header {
+                @apply bg-neutral text-neutral-dark font-medium text-sm;
+            }
+            .vertical-align-top {
+                @apply align-top;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-inter">
+    <!-- 顶部导航栏 -->
+    <nav class="bg-white shadow-md fixed w-full top-0 z-10">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <i class="fa fa-graduation-cap text-primary text-2xl"></i>
+                <a href="#" class="text-xl font-bold text-primary">学生信息管理系统</a>
+            </div>
+            <div class="md:hidden">
+                <button class="text-gray-700 focus:outline-none">
+                    <i class="fa fa-bars text-xl"></i>
+                </button>
+            </div>
+            <!-- 添加返回管理员操作界面的按钮 -->
+            <a href="/admin_manage" class="btn-secondary text-sm">
+                <i class="fa fa-arrow-left mr-1"></i>返回
+            </a>
+        </div>
+    </nav>
+
+    <!-- 主内容区 -->
+    <main class="container pt-24 pb-12">
+        <div class="text-center mb-8">
+            <h1 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold text-gray-800 mb-2">学生信息查询</h1>
+            <p class="text-gray-600">全面查询和管理学生信息、课程成绩及绩点统计</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <!-- 左侧查询面板 -->
+            <div class="lg:col-span-3">
+                <div class="card h-full">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4 pb-2 border-b border-gray-200">查询条件</h3>
+
+                    <div class="space-y-6">
+                        <!-- 学号查询 -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">按学号查询</label>
+                            <input type="text" id="stu_id_filter" class="input-field" placeholder="输入学号">
+                        </div>
+
+                        <!-- 姓名查询 -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">按姓名查询</label>
+                            <input type="text" id="name_filter" class="input-field" placeholder="输入姓名">
+                        </div>
+
+                        <!-- 班级查询 -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">按班级查询</label>
+                            <input type="text" id="class_id_filter" class="input-field" placeholder="输入班级">
+                        </div>
+
+                        <!-- 专业查询 -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">按专业查询</label>
+                            <input type="text" id="major_filter" class="input-field" placeholder="输入专业">
+                        </div>
+
+                        <!-- 课程查询 -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">按课程查询</label>
+                            <input type="text" id="course_filter" class="input-field" placeholder="输入课程名称">
+                        </div>
+
+                        <!-- 成绩范围查询 -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">按成绩范围查询</label>
+                            <div class="flex space-x-2">
+                                <input type="number" id="min_grade" class="input-field" placeholder="最低分">
+                                <input type="number" id="max_grade" class="input-field" placeholder="最高分">
+                            </div>
+                        </div>
+
+                        <!-- 查询按钮 -->
+                        <div>
+                            <button class="btn-primary w-full" onclick="searchStudents()">
+                                <i class="fa fa-search mr-2"></i>查询
+                            </button>
+                        </div>
+
+                        <!-- 重置按钮 -->
+                        <div>
+                            <button class="btn-secondary w-full" onclick="resetFilters()">
+                                <i class="fa fa-refresh mr-2"></i>重置查询
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右侧结果展示 -->
+            <div class="lg:col-span-9">
+                <div class="card">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-2 md:mb-0">学生信息列表</h3>
+                        <div class="flex flex-wrap gap-2">
+                            <button class="btn-secondary text-sm" onclick="sortByGrade('asc')">
+                                <i class="fa fa-sort-numeric-asc mr-1"></i>成绩升序
+                            </button>
+                            <button class="btn-secondary text-sm" onclick="sortByGrade('desc')">
+                                <i class="fa fa-sort-numeric-desc mr-1"></i>成绩降序
+                            </button>
+                            <button class="btn-secondary text-sm" onclick="sortByGPA('asc')">
+                                <i class="fa fa-sort-amount-asc mr-1"></i>绩点升序
+                            </button>
+                            <button class="btn-secondary text-sm" onclick="sortByGPA('desc')">
+                                <i class="fa fa-sort-amount-desc mr-1"></i>绩点降序
+                            </button>
+                            <button class="btn-primary text-sm" onclick="calculateGPA()">
+                                <i class="fa fa-calculator mr-1"></i>计算平均绩点
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 统计信息 -->
+                    <div id="gpaStats" class="bg-blue-50 p-3 rounded-lg mb-4 hidden">
+                        <p id="gpaSummary" class="text-sm text-blue-800"></p>
+                    </div>
+
+                    <!-- 错误提示 -->
+                    <div id="errorMessage" class="bg-red-50 p-3 rounded-lg mb-4 hidden">
+                        <p id="errorText" class="text-sm text-red-800"></p>
+                    </div>
+
+                    <!-- 加载提示 -->
+                    <div id="loadingMessage" class="bg-yellow-50 p-3 rounded-lg mb-4 hidden">
+                        <p id="loadingText" class="text-sm text-yellow-800">正在加载，请稍候...</p>
+                    </div>
+
+                    <!-- 学生表格 -->
+                    <div class="overflow-x-auto">
+                        <table class="w-full min-w-[768px]">
+                            <thead>
+                                <tr class="table-header">
+                                    <th class="py-3 px-4 text-left rounded-tl-lg">学号</th>
+                                    <th class="py-3 px-4 text-left">姓名</th>
+                                    <th class="py-3 px-4 text-left">性别</th>
+                                    <th class="py-3 px-4 text-left">出生日期</th>
+                                    <th class="py-3 px-4 text-left">专业</th>
+                                    <th class="py-3 px-4 text-left">班级</th>
+                                    <th class="py-3 px-4 text-left">课程</th>
+                                    <th class="py-3 px-4 text-left">学分</th>
+                                    <th class="py-3 px-4 text-left">成绩</th>
+                                    <th class="py-3 px-4 text-left">考试日期</th>
+                                    <th class="py-3 px-4 text-left rounded-tr-lg">平均绩点</th>
+                                </tr>
+                            </thead>
+                            <tbody id="studentTableBody">
+                                <!-- 动态填充 -->
+                            </tbody>
+                            <tbody class="no-results" id="noResultsMsg" style="display: none;">
+                                <tr>
+                                    <td colspan="11" class="py-8 text-center text-gray-500">
+                                        <i class="fa fa-search fa-2x mb-2 block"></i>
+                                        未找到符合条件的学生信息
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="bg-white border-t border-gray-200 py-6">
+        <div class="container mx-auto px-4 text-center text-gray-500 text-sm">
+            <p>学生信息管理系统</p>
+        </div>
+    </footer>
+
+    <script>
+        // 存储所有学生数据和当前显示的数据
+        let allStudents = [];
+        let currentStudents = [];
+
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            loadAllStudents();
+        });
+
+        // 加载所有学生信息
+        function loadAllStudents() {
+            showLoading();
+            fetch('/api/students/all')
+                .then(response => response.json())
+                .then(data => {
+                    hideLoading();
+                    if (data.success && data.students && data.students.length > 0) {
+                        allStudents = data.students;
+                        currentStudents = [...allStudents];
+                        renderStudents(currentStudents);
+                        showResults();
+                    } else {
+                        showNoResults();
+                    }
+                })
+                .catch(error => {
+                    hideLoading();
+                    console.error('加载学生信息失败:', error);
+                    showError('加载学生信息失败，请稍后重试');
+                });
+        }
+
+        // 查询学生信息
+        function searchStudents() {
+            const stu_id = document.getElementById('stu_id_filter').value.trim();
+            const name = document.getElementById('name_filter').value.trim();
+            const class_id = document.getElementById('class_id_filter').value.trim();
+            const major = document.getElementById('major_filter').value.trim();
+            const course = document.getElementById('course_filter').value.trim();
+            const min_grade = document.getElementById('min_grade').value;
+            const max_grade = document.getElementById('max_grade').value;
+
+            let queryParams = {};
+            if (stu_id) queryParams.stu_id = stu_id;
+            if (name) queryParams.name = name;
+            if (class_id) queryParams.class_id = class_id;
+            if (major) queryParams.major = major;
+            if (course) queryParams.course = course;
+            if (min_grade) queryParams.min_grade = min_grade;
+            if (max_grade) queryParams.max_grade = max_grade;
+
+            if (Object.keys(queryParams).length === 0) {
+                showError('请至少输入一个查询条件');
+                return;
+            }
+
+            showLoading();
+            fetch(`/api/students/search?${new URLSearchParams(queryParams)}`)
+                .then(response => response.json())
+                .then(data => {
+                    hideLoading();
+                    if (data.success && data.students && data.students.length > 0) {
+                        allStudents = data.students;
+                        currentStudents = [...allStudents];
+                        renderStudents(currentStudents);
+                        showResults();
+                    } else {
+                        showNoResults();
+                    }
+                })
+                .catch(error => {
+                    hideLoading();
+                    console.error('查询失败:', error);
+                    showError('查询失败，请检查输入条件是否正确');
+                });
+        }
+
+        // 重置筛选条件
+        function resetFilters() {
+            document.getElementById('stu_id_filter').value = '';
+            document.getElementById('name_filter').value = '';
+            document.getElementById('class_id_filter').value = '';
+            document.getElementById('major_filter').value = '';
+            document.getElementById('course_filter').value = '';
+            document.getElementById('min_grade').value = '';
+            document.getElementById('max_grade').value = '';
+            document.getElementById('gpaStats').style.display = 'none';
+            document.getElementById('errorMessage').style.display = 'none';
+            document.getElementById('loadingMessage').style.display = 'none';
+
+            // 重新加载所有学生信息
+            loadAllStudents();
+        }
+
+        // 渲染学生表格
+        function renderStudents(students) {
+            const tableBody = document.getElementById('studentTableBody');
+            const noResultsMsg = document.getElementById('noResultsMsg');
+
+            // 清空表格
+            tableBody.innerHTML = '';
+
+            if (!students || students.length === 0) {
+                noResultsMsg.style.display = 'table-row-group';
+                return;
+            }
+
+            noResultsMsg.style.display = 'none';
+
+            // 渲染每个学生的信息
+            students.forEach(student => {
+                const courses = student.courses || [];
+
+                // 计算平均绩点
+                const gpa = calculateStudentGPA(student);
+                const gpaDisplay = gpa !== null ? gpa.toFixed(2) : 'N/A';
+
+                // 为每个学生创建多行（每个课程一行）
+                courses.forEach((course, index) => {
+                    const row = document.createElement('tr');
+                    row.className = index === 0
+                        ? 'student-row bg-white border-b hover:bg-gray-50 transition-colors'
+                        : 'student-row bg-gray-50 border-b hover:bg-gray-100 transition-colors';
+
+                    // 第一行显示学生基本信息
+                    if (index === 0) {
+                        row.innerHTML = `
+                            <td class="py-3 px-4 vertical-align-top">${student.stu_id}</td>
+                            <td class="py-3 px-4 vertical-align-top">${student.name}</td>
+                            <td class="py-3 px-4 vertical-align-top">${student.gender}</td>
+                            <td class="py-3 px-4 vertical-align-top">${student.birth_date || '-'}</td>
+                            <td class="py-3 px-4 vertical-align-top">${student.major}</td>
+                            <td class="py-3 px-4 vertical-align-top">${student.class_id || '-'}</td>
+                            <td class="py-3 px-4">${course.course_name}</td>
+                            <td class="py-3 px-4">${course.credit || '-'}</td>
+                            <td class="py-3 px-4">${course.grade !== null && course.grade !== undefined ? course.grade : '-'}</td>
+                            <td class="py-3 px-4">${course.exam_date || '-'}</td>
+                            <td class="py-3 px-4 vertical-align-top" rowspan="${courses.length}">${gpaDisplay}</td>
+                        `;
+                    } else {
+                        // 后续行只显示课程信息
+                        row.innerHTML = `
+                            <td class="py-3 px-4" colspan="6"></td>
+                            <td class="py-3 px-4">${course.course_name}</td>
+                            <td class="py-3 px-4">${course.credit || '-'}</td>
+                            <td class="py-3 px-4">${course.grade !== null && course.grade !== undefined ? course.grade : '-'}</td>
+                            <td class="py-3 px-4">${course.exam_date || '-'}</td>
+                        `;
+                    }
+
+                    tableBody.appendChild(row);
+                });
+
+                // 如果学生没有课程，显示一行空课程信息
+                if (courses.length === 0) {
+                    const row = document.createElement('tr');
+                    row.className = 'student-row bg-white border-b hover:bg-gray-50 transition-colors';
+                    row.innerHTML = `
+                        <td class="py-3 px-4">${student.stu_id}</td>
+                        <td class="py-3 px-4">${student.name}</td>
+                        <td class="py-3 px-4">${student.gender}</td>
+                        <td class="py-3 px-4">${student.birth_date || '-'}</td>
+                        <td class="py-3 px-4">${student.major}</td>
+                        <td class="py-3 px-4">${student.class_id || '-'}</td>
+                        <td class="py-3 px-4" colspan="4">无课程信息</td>
+                        <td class="py-3 px-4">N/A</td>
+                    `;
+                    tableBody.appendChild(row);
+                }
+            });
+        }
+
+        // 计算学生GPA（5分制）
+        function calculateStudentGPA(student) {
+            const courses = student.courses || [];
+            if (courses.length === 0) return null;
+
+            let totalWeightedPoints = 0;
+            let totalCredits = 0;
+
+            courses.forEach(course => {
+                if (course.grade !== null && course.grade !== undefined && course.credit) {
+                    const grade = parseFloat(course.grade);
+                    const credit = parseFloat(course.credit);
+
+                    // 5分制绩点计算：成绩/20
+                    const gpaPoints = grade / 20;
+
+                    // 加权绩点 = 绩点 * 学分
+                    totalWeightedPoints += gpaPoints * credit;
+                    totalCredits += credit;
+                }
+            });
+
+            return totalCredits > 0 ? totalWeightedPoints / totalCredits : null;
+        }
+
+        // 计算所有学生的平均绩点
+        function calculateGPA() {
+            if (currentStudents.length === 0) {
+                showError('没有学生数据可供计算');
+                return;
+            }
+
+            let totalStudents = 0;
+            let totalGPA = 0;
+            let validGPACount = 0;
+
+            currentStudents.forEach(student => {
+                const gpa = calculateStudentGPA(student);
+                if (gpa !== null) {
+                    validGPACount++;
+                    totalGPA += gpa;
+                }
+                totalStudents++;
+            });
+
+            const averageGPA = validGPACount > 0 ? totalGPA / validGPACount : 0;
+
+            document.getElementById('gpaSummary').textContent =
+                `共 ${totalStudents} 名学生，有效绩点数据 ${validGPACount} 条，平均绩点: ${averageGPA.toFixed(2)}（5分制）`;
+
+            document.getElementById('gpaStats').style.display = 'block';
+        }
+
+        // 按成绩排序
+        function sortByGrade(direction) {
+            currentStudents.sort((a, b) => {
+                const gradeA = a.courses && a.courses[0] ? a.courses[0].grade : null;
+                const gradeB = b.courses && b.courses[0] ? b.courses[0].grade : null;
+
+                if (gradeA === null && gradeB === null) return 0;
+                if (gradeA === null) return direction === 'asc' ? 1 : -1;
+                if (gradeB === null) return direction === 'asc' ? -1 : 1;
+
+                return direction === 'asc' ? gradeA - gradeB : gradeB - gradeA;
+            });
+
+            renderStudents(currentStudents);
+        }
+
+        // 按绩点排序
+        function sortByGPA(direction) {
+            currentStudents.sort((a, b) => {
+                const gpaA = calculateStudentGPA(a) || 0;
+                const gpaB = calculateStudentGPA(b) || 0;
+
+                return direction === 'asc' ? gpaA - gpaB : gpaB - gpaA;
+            });
+
+            renderStudents(currentStudents);
+            document.getElementById('gpaStats').style.display = 'block';
+        }
+
+        // 显示结果
+        function showResults() {
+            document.getElementById('studentTableBody').style.display = 'table-row-group';
+            document.getElementById('noResultsMsg').style.display = 'none';
+            document.getElementById('errorMessage').style.display = 'none';
+        }
+
+        // 显示无结果提示
+        function showNoResults() {
+            document.getElementById('studentTableBody').style.display = 'none';
+            document.getElementById('noResultsMsg').style.display = 'table-row-group';
+            document.getElementById('errorMessage').style.display = 'none';
+            document.getElementById('gpaStats').style.display = 'none';
+        }
+
+        // 显示错误提示
+        function showError(message) {
+            document.getElementById('errorText').textContent = message;
+            document.getElementById('errorMessage').style.display = 'block';
+            document.getElementById('studentTableBody').style.display = 'none';
+            document.getElementById('noResultsMsg').style.display = 'none';
+            document.getElementById('gpaStats').style.display = 'none';
+        }
+
+        // 显示加载提示
+        function showLoading() {
+            document.getElementById('loadingMessage').style.display = 'block';
+            document.getElementById('studentTableBody').style.display = 'none';
+            document.getElementById('noResultsMsg').style.display = 'none';
+            document.getElementById('errorMessage').style.display = 'none';
+            document.getElementById('gpaStats').style.display = 'none';
+        }
+
+        // 隐藏加载提示
+        function hideLoading() {
+            document.getElementById('loadingMessage').style.display = 'none';
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>学生密码修改</title>
+    <style>
+        body { font-family: "Microsoft YaHei", sans-serif; margin: 0; padding: 0; }
+        .header { background-color: #4CAF50; color: white; text-align: center; padding: 20px; }
+        .content { max-width: 400px; margin: 30px auto; padding: 20px; border: 1px solid #ddd; border-radius: 5px; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; }
+        .form-group input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .btn-container { text-align: center; margin-top: 20px; }
+        .btn {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 0 5px;
+        }
+        .btn:hover { background-color: #45a049; }
+        .btn:disabled { background-color: #cccccc; cursor: not-allowed; }
+        .error-message { color: red; margin-bottom: 10px; }
+        .success-message { color: green; margin-bottom: 10px; }
+        .loading { display: none; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>学生密码修改</h1>
+    </div>
+
+    <div class="content">
+        <div id="error-message" class="error-message" style="display: none;"></div>
+        <div id="success-message" class="success-message" style="display: none;"></div>
+
+        <form id="password-form">
+            <div class="form-group">
+                <label for="stu_id">学生账号：</label>
+                <input type="text" id="stu_id" class="input" readonly required>
+            </div>
+
+            <div class="form-group">
+                <label for="stu_pass">原密码：</label>
+                <input type="password" id="stu_pass" class="input" >
+            </div>
+
+            <div class="form-group">
+                <label for="new_pass">设置新密码：</label>
+                <input type="password" id="new_pass" class="input" >
+            </div>
+
+            <div class="form-group">
+                <label for="new_pass_confirm">确认新密码：</label>
+                <input type="password" id="new_pass_confirm" class="input" required>
+            </div>
+        </form>
+
+        <div class="btn-container">
+            <button type="button" class="btn" id="submit-btn" onclick="changePassword()">
+                <span>确定修改</span>
+                <span class="loading">加载中...</span>
+            </button>
+            <button type="button" class="btn" onclick="goBack()">返回</button>
+        </div>
+    </div>
+
+    <script>
+        // 从URL参数获取学生ID并填充到表单
+        function getStudentId() {
+            const params = new URLSearchParams(window.location.search);
+            return params.get('studentId');
+        }
+
+        // 页面加载完成后执行
+        document.addEventListener('DOMContentLoaded', function() {
+            const studentId = getStudentId();
+            if (studentId) {
+                document.getElementById('stu_id').value = studentId;
+            } else {
+                showError('缺少学生ID参数，无法修改密码！');
+            }
+
+            // 添加确认密码验证
+            const newPass = document.getElementById('new_pass');
+            const confirmPass = document.getElementById('new_pass_confirm');
+
+            newPass.addEventListener('input', validatePasswords);
+            confirmPass.addEventListener('input', validatePasswords);
+        });
+
+        // 显示错误信息
+        function showError(message) {
+            const errorElement = document.getElementById('error-message');
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+        }
+
+        // 显示成功信息
+        function showSuccess(message) {
+            const successElement = document.getElementById('success-message');
+            successElement.textContent = message;
+            successElement.style.display = 'block';
+        }
+
+        // 清除所有消息
+        function clearMessages() {
+            document.getElementById('error-message').style.display = 'none';
+            document.getElementById('success-message').style.display = 'none';
+        }
+
+        // 验证两次输入的新密码是否一致
+        function validatePasswords() {
+            const newPass = document.getElementById('new_pass').value;
+            const confirmPass = document.getElementById('new_pass_confirm').value;
+
+            if (newPass && confirmPass && newPass !== confirmPass) {
+                document.getElementById('new_pass_confirm').setCustomValidity('两次输入的密码不一致');
+            } else {
+                document.getElementById('new_pass_confirm').setCustomValidity('');
+            }
+        }
+
+        // 返回上一步
+        function goBack() {
+            window.history.back();
+        }
+
+        // 修改密码
+        function changePassword() {
+            const form = document.getElementById('password-form');
+
+            // 验证表单
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+
+            const stuId = document.getElementById('stu_id').value;
+            const stuOldPass = document.getElementById('stu_pass').value;
+            const stuNewPass = document.getElementById('new_pass').value;
+
+            // 禁用按钮防止重复提交
+            const submitBtn = document.getElementById('submit-btn');
+            submitBtn.disabled = true;
+            submitBtn.querySelector('span').style.display = 'none';
+            submitBtn.querySelector('.loading').style.display = 'inline';
+            clearMessages();
+
+            fetch('/update_student_password', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    stu_id: stuId,
+                    stu_pass: stuOldPass,
+                    new_pass: stuNewPass
+                })
+            })
+            .then(response => {
+                // 检查HTTP状态码
+                if (!response.ok) {
+                    throw new Error(`HTTP错误，状态码：${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    showSuccess('密码修改成功！');
+                    // 延迟后跳转到登录页面
+                    setTimeout(() => {
+                        window.location.href = '/student_login';
+                    }, 2000);
+                } else {
+                    showError('操作失败：' + (data.error || '未知错误'));
+                }
+            })
+            .catch(error => {
+                console.error('请求出错：', error);
+                showError('网络请求错误，请稍后重试');
+            })
+            .finally(() => {
+                // 恢复按钮状态
+                submitBtn.disabled = false;
+                submitBtn.querySelector('span').style.display = 'inline';
+                submitBtn.querySelector('.loading').style.display = 'none';
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>管理员密码修改</title>
+    <style>
+        body { font-family: "Microsoft YaHei", sans-serif; margin: 0; padding: 0; }
+        .header { background-color: #4CAF50; color: white; text-align: center; padding: 20px; }
+        .content { max-width: 400px; margin: 30px auto; padding: 20px; border: 1px solid #ddd; border-radius: 5px; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; }
+        .form-group input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .btn-container { text-align: center; margin-top: 20px; }
+        .btn {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 0 5px;
+        }
+        .btn:hover { background-color: #45a049; }
+        .error-message { color: red; margin-bottom: 10px; }
+        .success-message { color: green; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>管理员密码修改</h1>
+    </div>
+
+    <div class="content">
+        <div id="error-message" class="error-message" style="display: none;"></div>
+        <div id="success-message" class="success-message" style="display: none;"></div>
+
+        <form id="password-form">
+            <div class="form-group">
+                <label for="admin_id">管理员账号：</label>
+                <input type="text" id="admin_id" class="input" readonly>
+            </div>
+
+            <div class="form-group">
+                <label for="admin_old_pass">原密码：</label>
+                <input type="password" id="admin_old_pass" class="input">
+            </div>
+
+            <div class="form-group">
+                <label for="admin_new_pass">设置新密码：</label>
+                <input type="password" id="admin_new_pass" class="input">
+            </div>
+
+            <div class="form-group">
+                <label for="admin_new_pass_confirm">确认新密码：</label>
+                <input type="password" id="admin_new_pass_confirm" class="input">
+            </div>
+        </form>
+
+        <div class="btn-container">
+            <button class="btn" onclick="changePassword()">确定修改</button>
+            <button class="btn" onclick="goBack()">返回</button>
+        </div>
+    </div>
+
+    <script>
+        // 从会话中获取管理员ID
+        document.addEventListener('DOMContentLoaded', function() {
+            const adminId = "{{ session.get('admin_id') }}";
+            if (adminId) {
+                document.getElementById('admin_id').value = adminId;
+            } else {
+                showError('未检测到登录的管理员账号，请重新登录');
+                setTimeout(() => {
+                    window.location.href = '/admin_login';
+                }, 2000);
+            }
+        });
+
+        // 显示错误信息
+        function showError(message) {
+            const errorElement = document.getElementById('error-message');
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+        }
+
+        // 显示成功信息
+        function showSuccess(message) {
+            const successElement = document.getElementById('success-message');
+            successElement.textContent = message;
+            successElement.style.display = 'block';
+        }
+
+        // 清除所有消息
+        function clearMessages() {
+            document.getElementById('error-message').style.display = 'none';
+            document.getElementById('success-message').style.display = 'none';
+        }
+
+        // 返回上一步
+        function goBack() {
+            window.history.back();
+        }
+
+        // 修改密码
+        function changePassword() {
+            const adminId = document.getElementById('admin_id').value;
+            const adminOldPass = document.getElementById('admin_old_pass').value;
+            const adminNewPass = document.getElementById('admin_new_pass').value;
+            const adminNewPassConfirm = document.getElementById('admin_new_pass_confirm').value;
+
+            // 前端验证：确保原密码和新密码已填写
+            if (!adminOldPass || !adminNewPass || !adminNewPassConfirm) {
+                alert('请填写所有必填字段！');
+                return;
+            }
+
+            // 前端验证：确保新密码和确认密码一致
+            if (adminNewPass !== adminNewPassConfirm) {
+                alert('新密码和确认密码不一致，请重新输入！');
+                return;
+            }
+
+            fetch('/update_admin_password', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    admin_id: adminId,
+                    admin_pass: adminOldPass,
+                    admin_new_pass: adminNewPass
+                })
+            })
+           .then(response => response.json())
+           .then(data => {
+                if (data.success) {
+                    alert('密码修改成功！');
+                    window.location.href = '/admin_login'; // 跳转到登录页面
+                } else {
+                    alert('操作失败：' + (data.error || '未知错误'));
+                }
+            })
+           .catch(error => {
+                console.error('请求出错：', error);
+                alert('网络请求错误，请稍后重试');
+            });
+        }
+    </script>
+</body>
+</html>

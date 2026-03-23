@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>学生登录</title>
+    <style>
+        body {
+            font-family: '微软雅黑', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #f0f2f5;
+        }
+
+        .login-container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .title {
+            color: #1a73e8;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+            text-align: left;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 5px;
+            color: #5f6368;
+        }
+
+        .form-input {
+            width: 300px;
+            height: 40px;
+            padding: 8px;
+            border: 1px solid #dfe1e5;
+            border-radius: 4px;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .form-input:focus {
+            border-color: #1a73e8;
+            box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.2);
+        }
+
+        .button-group {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .login-btn {
+            background-color: #1a73e8;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            margin-right: 10px;
+            transition: background-color 0.3s;
+        }
+
+        .login-btn:hover {
+            background-color: #1556b0;
+        }
+
+        .back-btn {
+            background-color: #f0f0f0;
+            color: #5f6368;
+            border: 1px solid #dfe1e5;
+            padding: 10px 20px;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .back-btn:hover {
+            background-color: #e0e0e0;
+        }
+
+        .error-message {
+            color: #dc3545;
+            text-align: center;
+            margin-top: 15px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <h2 class="title">学生登录</h2>
+        <div class="error-message" id="errorMsg"></div>
+
+        <form id="loginForm">
+            <div class="form-group">
+                <label class="form-label" for="stu_id">学号：</label>
+                <input type="text"
+                       id="stu_id"
+                       class="form-input"
+                       name="username"
+                       placeholder="请输入9位学号"
+                       pattern="[0-9]{9}"
+                       required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="stu_pass">密码：</label>
+                <input type="password"
+                       id="stu_pass"
+                       class="form-input"
+                       name="password"
+                       placeholder="请输入密码"
+                       minlength="6"
+                       required>
+            </div>
+
+            <div class="button-group">
+                <button type="button" class="login-btn" onclick="handleLogin()">登录</button>
+                <button type="button" class="back-btn" onclick="goBack()">返回首页</button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        function handleLogin() {
+            const form = document.getElementById('loginForm');
+            const formData = new FormData(form);
+
+            // 校验学号格式（9位数字）
+            const stuId = formData.get('username');
+            if (!/^\d{9}$/.test(stuId)) {
+                showError('学号必须为9位数字');
+                return;
+            }
+
+            if (!confirm("确认使用以下信息登录？\n学号：" + stuId)) {
+                return;
+            }
+
+            fetch('/check_student', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer valid_token' // 替换为实际Token
+                },
+                body: JSON.stringify({
+                    stu_id: formData.get('username'),
+                    stu_old_pass: formData.get('password')
+                })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('网络请求失败');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    // 跳转到学生详情页并传递学号参数
+                    window.location.href = `/student_view?studentId=${encodeURIComponent(stuId)}`;
+                } else {
+                    showError(data.message || '登录失败，请检查账号密码');
+                }
+            })
+            .catch(error => {
+                showError('服务器连接失败，请稍后再试');
+                console.error('登录请求错误：', error);
+            });
+        }
+
+        function goBack() {
+            window.location.href = '/index.html';
+        }
+
+        function showError(message) {
+            const errorMsg = document.getElementById('errorMsg');
+            errorMsg.textContent = message;
+            // 5秒后清除错误信息
+            setTimeout(() => {
+                errorMsg.textContent = '';
+            }, 5000);
+        }
+    </script>
+</body>
+</html>

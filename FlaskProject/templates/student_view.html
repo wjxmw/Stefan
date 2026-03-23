@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>个人信息查看</title>
+    <style>
+        body { font-family: "Microsoft YaHei", sans-serif; margin: 0; padding: 0; }
+        .header { background-color: #4CAF50; color: white; text-align: center; padding: 20px; }
+        .content { max-width: 800px; margin: 20px auto; padding: 20px; }
+        .info-table, .course-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        .info-table th, .info-table td, .course-table th, .course-table td {
+            border: 1px solid #ddd; padding: 8px; text-align: left;
+        }
+        .info-table th { background-color: #f2f2f2; }
+        .course-table th { background-color: #4CAF50; color: white; }
+        .btn-container { text-align: center; margin-top: 20px; }
+        .btn {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            margin: 0 10px;
+        }
+        .btn:hover { background-color: #45a049; }
+        .loading { text-align: center; padding: 20px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>学生信息查看</h1>
+    </div>
+
+    <div class="content">
+        <div id="loading" class="loading">
+            <p>正在加载学生信息...</p>
+        </div>
+
+        <div id="student-info" style="display: none;">
+            <table class="info-table">
+                <tr><th>学号</th><td id="stu_id"></td></tr>
+                <tr><th>姓名</th><td id="name"></td></tr>
+                <tr><th>性别</th><td id="gender"></td></tr>
+                <tr><th>年龄</th><td id="age"></td></tr>
+                <tr><th>出生日期</th><td id="birth_date"></td></tr>
+                <tr><th>专业</th><td id="major"></td></tr>
+                <tr><th>班级</th><td id="class_id"></td></tr>
+            </table>
+
+            <h2>已选课程</h2>
+            <table class="course-table">
+                <thead>
+                    <tr>
+                        <th>课程名称</th>
+                        <th>学分</th>
+                        <th>成绩</th>
+                        <th>考试日期</th>
+                    </tr>
+                </thead>
+                <tbody id="course_list">
+                    <!-- 课程列表将通过JavaScript动态生成 -->
+                </tbody>
+            </table>
+
+            <div class="btn-container">
+                <button class="btn" onclick="changePassword()">修改密码</button>
+                <button class="btn" onclick="goBack()">返回</button>
+            </div>
+        </div>
+
+        <div id="error-message" style="display: none; text-align: center; color: red;">
+            <p>加载学生信息失败，请稍后重试！</p>
+        </div>
+    </div>
+
+    <script>
+        // 从URL参数获取学生ID
+        function getStudentId() {
+            const params = new URLSearchParams(window.location.search);
+            return params.get('studentId');
+        }
+
+        // 加载学生数据
+        function loadData(input = `/api/student/`) {
+            const studentId = getStudentId();
+            if (!studentId) {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('error-message').style.display = 'block';
+                document.getElementById('error-message').innerHTML = '<p>缺少学生ID参数，请从登录页面进入！</p>';
+                return;
+            }
+
+            fetch(`${input}${studentId}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('网络响应错误：' + response.status);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    document.getElementById('loading').style.display = 'none';
+
+                    if (!data || data.error) {
+                        document.getElementById('error-message').style.display = 'block';
+                        document.getElementById('error-message').innerHTML = `<p>${data.error || '未找到学生信息'}</p>`;
+                        return;
+                    }
+
+                    // 填充学生基本信息
+                    document.getElementById('stu_id').textContent = data.id || 'N/A';
+                    document.getElementById('name').textContent = data.name || 'N/A';
+                    document.getElementById('gender').textContent = data.gender || 'N/A';
+                    document.getElementById('age').textContent = data.age || 'N/A';
+                    document.getElementById('birth_date').textContent = data.birth_date || 'N/A';
+                    document.getElementById('major').textContent = data.major || 'N/A';
+                    document.getElementById('class_id').textContent = data.class || 'N/A';
+
+                    // 动态生成课程列表
+                    const courseList = document.getElementById('course_list');
+                    courseList.innerHTML = '';
+
+                    if (data.courses && data.courses.length > 0) {
+                        data.courses.forEach(course => {
+                            const row = document.createElement('tr');
+                            row.innerHTML = `
+                                <td>${course.course_name || 'N/A'}</td>
+                                <td>${course.credit || 'N/A'}</td>
+                                <td>${course.grade || '未公布'}</td>
+                                <td>${course.exam_date||'未公布'}</td>
+                            `;
+                            courseList.appendChild(row);
+                        });
+                    } else {
+                        courseList.innerHTML = '<tr><td colspan="4">暂无课程信息</td></tr>';
+                    }
+
+                    document.getElementById('student-info').style.display = 'block';
+                })
+                .catch(error => {
+                    console.error('获取学生数据错误:', error);
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('error-message').style.display = 'block';
+                });
+        }
+
+        // 修改密码
+        function changePassword() {
+            const studentId = getStudentId();
+            if (studentId) {
+                window.location.href = `/student_change?studentId=${studentId}`;
+                } else {
+                alert('无法获取学生ID，不能修改密码！');
+                }
+            }
+
+        // 返回学生登录界面
+        function goBack() {
+            window.location.href = '/student_login'; // 修改为学生登录页面的URL
+}
+
+        // 页面加载完成后执行
+        document.addEventListener('DOMContentLoaded', loadData);
+    </script>
+</body>
+</html>

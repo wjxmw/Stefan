@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>编辑学生信息</title>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .form-container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .search-container { margin-bottom: 2rem; }
+        .input-group { margin-bottom: 1.5rem; }
+        .input-label { display: block; margin-bottom: 0.5rem; color: #4E5969; }
+        .form-input {
+            width: 100%;
+            padding: 0.8rem;
+            border: 1px solid #D1D5DB;
+            border-radius: 0.375rem;
+            font-size: 0.975rem;
+            background-color: #FFFFFF;
+        }
+        .form-input:focus {
+            border-color: #165DFF;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(22, 93, 255, 0.2);
+        }
+        .button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            padding: 0.875rem 1.25rem;
+            border: none;
+            border-radius: 0.375rem;
+            font-size: 1rem;
+            font-weight: 500;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .primary-button { background-color: #165DFF; color: white; }
+        .primary-button:hover { background-color: #0e47c4; transform: translateY(-1px); }
+        .primary-button:active { transform: translateY(0); }
+        .secondary-button { background-color: #F3F4F6; color: #4E5969; }
+        .secondary-button:hover { background-color: #E5E7EB; transform: translateY(-1px); }
+        .secondary-button:active { transform: translateY(0); }
+        .delete-button { background-color: #DC2626; color: white; }
+        .delete-button:hover { background-color: #b91c1c; transform: translateY(-1px); }
+        .delete-button:active { transform: translateY(0); }
+        .error-message { color: #DC2626; font-size: 0.875rem; margin-top: 0.25rem; }
+        .form-group { display: none; }
+        .button-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+        }
+
+        /* 新增模态弹窗样式 */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            display: none;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 0.375rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            width: 90%;
+            max-width: 400px;
+        }
+
+        .modal-title {
+            text-align: center;
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #252B42;
+            margin-bottom: 1rem;
+        }
+
+        .modal-message {
+            text-align: center;
+            color: #6B7280;
+            margin-bottom: 2rem;
+        }
+
+        .modal-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+        }
+
+        .modal-button {
+            padding: 0.5rem 1.5rem;
+            border-radius: 0.375rem;
+            cursor: pointer;
+        }
+
+        .modal-close-button {
+            background-color: #DC2626;
+            color: white;
+        }
+
+        .modal-confirm-button {
+            background-color: #165DFF;
+            color: white;
+        }
+
+        /* 加载动画 */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            display: none;
+        }
+
+        .loading-spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: #165DFF;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- 顶部导航栏 -->
+    <nav class="bg-white shadow-md fixed w-full top-0 z-10">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <i class="fa fa-shield text-blue-600 text-2xl"></i>
+                <a href="/admin_manage" class="text-xl font-bold text-blue-600">学生管理系统</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 加载动画 -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <!-- 主内容区 -->
+    <main class="form-container pt-20 pb-12">
+        <h2 class="text-2xl font-bold text-gray-800 mb-6">编辑学生档案</h2>
+
+        <div class="search-container">
+            <label class="input-label" for="search_key">请输入学号查询学生</label>
+            <input type="text"
+                   id="search_key"
+                   class="form-input"
+                   placeholder="输入学号">
+            <div class="button-group">
+                <button class="primary-button" onclick="searchStudent()">
+                    <i class="fa fa-search mr-2"></i>查询学生
+                </button>
+                <button class="secondary-button" onclick="window.location.href='/admin_manage'">
+                    <i class="fa fa-arrow-left mr-2"></i>返回
+                </button>
+            </div>
+        </div>
+
+        <form id="editForm" class="form-group">
+            <div class="input-group">
+                <label class="input-label" for="display_stu_id">学号</label>
+                <input type="text"
+                       id="display_stu_id"
+                       class="form-input"
+                       readonly
+                       placeholder="查询后显示学号">
+                <input type="hidden" id="stu_id" name="stu_id">
+            </div>
+
+            <div class="input-group">
+                <label class="input-label" for="name">姓名</label>
+                <input type="text"
+                       id="name"
+                       class="form-input"
+                       name="name"
+                       required>
+                <div class="error-message" id="name_error">请输入姓名</div>
+            </div>
+
+            <div class="input-group">
+                <label class="input-label" for="gender">性别</label>
+                <select id="gender" class="form-input" name="gender" required>
+                    <option value="">请选择性别</option>
+                    <option value="男">男</option>
+                    <option value="女">女</option>
+                </select>
+                <div class="error-message" id="gender_error">请选择性别</div>
+            </div>
+
+            <div class="input-group">
+                <label class="input-label" for="birth_date">出生日期</label>
+                <input type="date"
+                       id="birth_date"
+                       class="form-input"
+                       name="birth_date"
+                       required>
+                <div class="error-message" id="birth_date_error">请选择出生日期</div>
+            </div>
+
+            <div class="input-group">
+                <label class="input-label" for="major">专业</label>
+                <input type="text"
+                       id="major"
+                       class="form-input"
+                       name="major"
+                       required>
+                <div class="error-message" id="major_error">请输入专业名称</div>
+            </div>
+
+            <div class="input-group">
+                <label class="input-label" for="class_id">班级</label>
+                <input type="text"
+                       id="class_id"
+                       class="form-input"
+                       name="class_id"
+                       required>
+                <div class="error-message" id="class_id_error">请输入班级编号</div>
+            </div>
+
+            <div class="input-group">
+                <label class="input-label" for="course_name">修读课程</label>
+                <input type="text"
+                       id="course_name"
+                       class="form-input"
+                       name="course_name"
+                       required>
+                <div class="error-message" id="course_name_error">请输入课程名称</div>
+            </div>
+
+            <div class="input-group">
+                <label class="input-label" for="grade">课程成绩</label>
+                <input type="number"
+                       id="grade"
+                       class="form-input"
+                       name="grade"
+                       min="0"
+                       max="100"
+                       required>
+                <div class="error-message" id="grade_error">成绩需在0-100之间</div>
+            </div>
+
+            <div class="input-group">
+                <label class="input-label" for="exam_date">考试日期</label>
+                <input type="date"
+                       id="exam_date"
+                       class="form-input"
+                       name="exam_date"
+                       required>
+                <div class="error-message" id="exam_date_error">请选择考试日期</div>
+            </div>
+
+            <div class="button-group">
+                <button type="button" class="primary-button" onclick="updateStudent()">
+                    <i class="fa fa-save mr-2"></i>保存修改
+                </button>
+                <button type="button" class="delete-button" onclick="deleteStudent()">
+                    <i class="fa fa-trash mr-2"></i>删除学生
+                </button>
+                <button class="secondary-button" onclick="window.location.href='/admin_manage'">
+                    <i class="fa fa-arrow-left mr-2"></i>返回
+                </button>
+            </div>
+        </form>
+
+        <div id="errorMsg" class="error-message text-center mt-4"></div>
+    </main>
+
+    <!-- 操作结果模态弹窗 -->
+    <div class="modal-overlay" id="resultModal">
+        <div class="modal-content">
+            <div class="modal-title" id="resultTitle">操作结果</div>
+            <div class="modal-message" id="resultMessage">操作成功</div>
+            <div class="modal-buttons">
+                <button class="modal-button modal-confirm-button" onclick="closeResultModal()">确定</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 学号不存在模态弹窗 -->
+    <div class="modal-overlay" id="studentNotFoundModal">
+        <div class="modal-content">
+            <div class="modal-title">提示</div>
+            <div class="modal-message" id="modalMessage">不存在此学号，请重新输入</div>
+            <div class="modal-buttons">
+                <button class="modal-button modal-confirm-button" onclick="closeModal()">确定</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedStudent = null;
+
+        // 显示加载动画
+        function showLoading() {
+            document.getElementById('loadingOverlay').style.display = 'flex';
+        }
+
+        // 隐藏加载动画
+        function hideLoading() {
+            document.getElementById('loadingOverlay').style.display = 'none';
+        }
+
+        // 显示结果弹窗
+        function showResultModal(title, message) {
+            document.getElementById('resultTitle').textContent = title;
+            document.getElementById('resultMessage').textContent = message;
+            document.getElementById('resultModal').style.display = 'flex';
+        }
+
+        // 关闭结果弹窗
+        function closeResultModal() {
+            document.getElementById('resultModal').style.display = 'none';
+        }
+
+        // 显示学号不存在弹窗
+        function showStudentNotFoundModal() {
+            document.getElementById('studentNotFoundModal').style.display = 'flex';
+        }
+
+        // 关闭弹窗
+        function closeModal() {
+            document.getElementById('studentNotFoundModal').style.display = 'none';
+            document.getElementById('search_key').focus();
+        }
+
+        // 查询学生信息
+        function searchStudent() {
+            const stuId = document.getElementById('search_key').value.trim();
+            if (!stuId) {
+                showError('请输入学号');
+                return;
+            }
+
+            showLoading();
+            document.getElementById('errorMsg').textContent = '';
+
+            // 使用正确的API端点查询学生信息
+            fetch(`/api/students/search?stu_id=${encodeURIComponent(stuId)}`)
+                .then(response => {
+                    hideLoading();
+                    if (!response.ok) {
+                        if (response.status === 404) {
+                            showStudentNotFoundModal();
+                        } else {
+                            throw new Error(`查询失败，状态码: ${response.status}`);
+                        }
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success && data.students && data.students.length > 0) {
+                        // 假设查询结果中的第一个学生是我们要找的
+                        selectedStudent = data.students[0];
+                        fillForm(selectedStudent);
+                        document.getElementById('editForm').style.display = 'block';
+                    } else {
+                        showError('未找到该学生信息，请重试');
+                        resetForm();
+                    }
+                })
+                .catch(error => {
+                    showError(error.message || '查询失败，请稍后重试');
+                    console.error('查询学生信息时出错:', error);
+                });
+        }
+
+        // 填充表单数据
+        function fillForm(student) {
+            document.getElementById('display_stu_id').value = student.stu_id;
+            document.getElementById('stu_id').value = student.stu_id;
+            document.getElementById('name').value = student.name;
+            document.getElementById('gender').value = student.gender;
+            document.getElementById('birth_date').value = student.birth_date || '';
+            document.getElementById('major').value = student.major;
+            document.getElementById('class_id').value = student.class_id;
+
+            // 填充课程信息
+            if (student.courses && student.courses.length > 0) {
+                const course = student.courses[0];
+                document.getElementById('course_name').value = course.course_name || '';
+                document.getElementById('grade').value = course.grade || '';
+                document.getElementById('exam_date').value = course.exam_date || '';
+            } else {
+                document.getElementById('course_name').value = '';
+                document.getElementById('grade').value = '';
+                document.getElementById('exam_date').value = '';
+            }
+        }
+
+        // 重置表单
+        function resetForm() {
+            document.getElementById('editForm').style.display = 'none';
+            document.getElementById('editForm').reset();
+            selectedStudent = null;
+        }
+
+        // 更新学生信息
+        function updateStudent() {
+            if (!selectedStudent) {
+                showError('请先查询并选择学生');
+                return;
+            }
+
+            // 验证表单数据
+            if (!validateForm()) {
+                return;
+            }
+
+            // 收集表单数据
+            const formData = {
+                stu_id: document.getElementById('stu_id').value,
+                name: document.getElementById('name').value,
+                gender: document.getElementById('gender').value,
+                birth_date: document.getElementById('birth_date').value,
+                major: document.getElementById('major').value,
+                class_id: document.getElementById('class_id').value,
+                courses: [{
+                    course_name: document.getElementById('course_name').value,
+                    grade: parseInt(document.getElementById('grade').value),
+                    exam_date: document.getElementById('exam_date').value
+                }]
+            };
+
+            // 显示加载状态
+            showLoading();
+            document.getElementById('errorMsg').textContent = '';
+
+            // 发送数据到后端，使用正确的HTTP方法和API端点
+            fetch(`/api/students/update/${selectedStudent.stu_id}`, {
+                method: 'POST',  // 后端API使用POST方法
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(formData)
+            })
+            .then(response => {
+                hideLoading();
+                if (!response.ok) {
+                    throw new Error(`HTTP错误，状态码: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    showResultModal('成功', '学生信息更新成功！');
+                    // 延迟后刷新页面或返回列表
+                    setTimeout(() => {
+                        window.location.href = '/admin_manage';
+                    }, 1500);
+                } else {
+                    showError(data.message || '更新失败，原因未知');
+                }
+            })
+            .catch(error => {
+                console.error('更新学生信息时出错:', error);
+                showError('网络错误，请稍后重试');
+            });
+        }
+
+        // 表单验证函数
+        function validateForm() {
+            let isValid = true;
+            const requiredFields = ['name', 'gender', 'birth_date', 'major', 'class_id', 'course_name', 'grade', 'exam_date'];
+
+            // 清除所有错误信息
+            document.querySelectorAll('.error-message').forEach(el => {
+                el.style.display = 'none';
+            });
+
+            // 检查必填字段
+            requiredFields.forEach(field => {
+                const input = document.getElementById(field);
+                if (!input.value.trim()) {
+                    document.getElementById(`${field}_error`).style.display = 'block';
+                    isValid = false;
+                }
+            });
+
+            // 检查成绩范围
+            const grade = document.getElementById('grade').value;
+            if (grade && (parseInt(grade) < 0 || parseInt(grade) > 100)) {
+                document.getElementById('grade_error').style.display = 'block';
+                isValid = false;
+            }
+
+            return isValid;
+        }
+
+        // 删除学生函数
+        function deleteStudent() {
+            if (!selectedStudent) {
+                showError('请先查询并选择学生');
+                return;
+            }
+
+            if (confirm(`确定要删除学号为 ${selectedStudent.stu_id} 的学生信息吗？此操作不可撤销！`)) {
+                showLoading();
+
+                fetch(`/api/students/delete/${selectedStudent.stu_id}`, {
+                    method: 'DELETE'
+                })
+                .then(response => {
+                    hideLoading();
+                    if (!response.ok) {
+                        throw new Error(`HTTP错误，状态码: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        showResultModal('成功', '学生信息已成功删除！');
+                        setTimeout(() => {
+                            window.location.href = '/admin_manage';
+                        }, 1500);
+                    } else {
+                        showError(data.message || '删除失败，原因未知');
+                    }
+                })
+                .catch(error => {
+                    console.error('删除学生信息时出错:', error);
+                    hideLoading();
+                    showError('网络错误，请稍后重试');
+                });
+            }
+        }
+
+        function showError(message) {
+            document.getElementById('errorMsg').textContent = message;
+        }
+    </script>
+</body>
+</html>

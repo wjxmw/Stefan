@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>管理员登录</title>
+    <style>
+        body {
+            font-family: '微软雅黑', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #f0f2f5;
+        }
+
+        .login-container {
+            background-color: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            width: 400px;
+            max-width: 90%;
+        }
+
+        .title {
+            color: #1a73e8;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            color: #5f6368;
+            font-size: 15px;
+            font-weight: 500;
+        }
+
+        .form-input {
+            width: 100%;
+            height: 48px;
+            padding: 0 16px;
+            border: 1px solid #dfe1e5;
+            border-radius: 6px;
+            font-size: 16px;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        .form-input:focus {
+            border-color: #1a73e8;
+            box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.15);
+        }
+
+        .button-group {
+            display: flex;
+            justify-content: center;
+            margin-top: 30px;
+            gap: 15px;
+        }
+
+        .login-btn {
+            background-color: #1a73e8;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+            font-weight: 500;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .login-btn:hover {
+            background-color: #1556b0;
+            transform: translateY(-1px);
+        }
+
+        .login-btn:active {
+            transform: translateY(1px);
+        }
+
+        .back-btn {
+            background-color: #f0f0f0;
+            color: #5f6368;
+            border: 1px solid #dfe1e5;
+            padding: 12px 30px;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+
+        .back-btn:hover {
+            background-color: #e0e0e0;
+        }
+
+        .error-message {
+            color: #dc3545;
+            text-align: center;
+            margin-top: 15px;
+            font-size: 14px;
+            display: none;
+            padding: 8px 12px;
+            background-color: #f8d7da;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <h2 class="title">管理员登录</h2>
+
+        <div class="error-message" id="errorMsg"></div>
+
+        <form id="loginForm">
+            <div class="form-group">
+                <label class="form-label" for="admin_id">账号</label>
+                <input type="text" id="admin_id" class="form-input" placeholder="请输入管理员账号">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="admin_pass">密码</label>
+                <input type="password" id="admin_pass" class="form-input" placeholder="请输入密码">
+            </div>
+        </form>
+
+        <div class="button-group">
+            <button class="login-btn" onclick="login()">登录</button>
+            <button class="back-btn" onclick="location.href='index.html'">返回首页</button>
+        </div>
+    </div>
+
+    <script>
+        function login() {
+            const username = document.getElementById('admin_id').value.trim();
+            const password = document.getElementById('admin_pass').value.trim();
+            const errorMsg = document.getElementById('errorMsg');
+
+            // 重置错误信息
+            errorMsg.style.display = 'none';
+
+            // 简单验证
+            if (!username || !password) {
+                errorMsg.textContent = '请输入完整的账号和密码';
+                errorMsg.style.display = 'block';
+                return;
+            }
+
+            if (!confirm("您确定要登录吗？")) {
+                return;
+            }
+
+            // 显示加载状态（实际项目中可添加更完善的加载效果）
+            const loginBtn = document.querySelector('.login-btn');
+            loginBtn.disabled = true;
+            loginBtn.textContent = '登录中...';
+
+            // 模拟数据库查询
+            fetch('/check_admin', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                loginBtn.disabled = false;
+                loginBtn.textContent = '登录';
+
+                if (data.success) {
+                    window.location.href = '/admin_manage';
+                } else {
+                    errorMsg.textContent = data.message || '用户名或密码不正确';
+                    errorMsg.style.display = 'block';
+                }
+            })
+            .catch(error => {
+                loginBtn.disabled = false;
+                loginBtn.textContent = '登录';
+                errorMsg.textContent = '网络错误，请稍后重试';
+                errorMsg.style.display = 'block';
+                console.error('登录请求失败:', error);
+            });
+        }
+    </script>
+</body>
+</html>

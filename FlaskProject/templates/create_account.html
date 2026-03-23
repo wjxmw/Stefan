@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>新建管理员账号</title>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .strength-bar {
+                height: 4px;
+                transition: width 0.3s ease;
+            }
+            .strength-weak {
+                background-color: #ef4444;
+                width: 25%;
+            }
+            .strength-medium {
+                background-color: #f59e0b;
+                width: 50%;
+            }
+            .strength-strong {
+                background-color: #10b981;
+                width: 100%;
+            }
+            .spinner-border {
+                display: inline-block;
+                width: 2rem;
+                height: 2rem;
+                vertical-align: text-bottom;
+                border: 0.25em solid currentColor;
+                border-right-color: transparent;
+                border-radius: 50%;
+                animation: spinner-border 0.75s linear infinite;
+            }
+            @keyframes spinner-border {
+                to {
+                    transform: rotate(360deg);
+                }
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans">
+    <!-- 顶部导航栏 -->
+    <nav class="bg-white shadow-md fixed w-full top-0 z-10">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <i class="fa fa-shield text-blue-600 text-2xl"></i>
+                <a href="/admin_manage" class="text-xl font-bold text-blue-600">学生管理系统</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主内容区 -->
+    <main class="container mx-auto px-4 pt-20 pb-12 max-w-3xl">
+        <div class="bg-white rounded-xl shadow-lg p-6 md:p-8 mb-6">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">创建新管理员账号</h2>
+
+            <form id="createAccountForm" onsubmit="return handleSubmit(event)">
+                <div class="mb-6">
+                    <label for="username" class="block text-sm font-medium text-gray-700 mb-1">用户名</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fa fa-user text-gray-400"></i>
+                        </div>
+                        <input type="text"
+                            id="username"
+                            class="pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                            placeholder="请输入用户名"
+                            onblur="checkUsernameAvailability()">
+                        <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                            <div id="username_loading" class="hidden">
+                                <i class="fa fa-spinner fa-spin text-gray-400"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <p id="username_error" class="mt-1 text-red-500 text-sm hidden"></p>
+                </div>
+
+                <div class="mb-6">
+                    <label for="password" class="block text-sm font-medium text-gray-700 mb-1">登录密码</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fa fa-lock text-gray-400"></i>
+                        </div>
+                        <input type="password"
+                            id="password"
+                            class="pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                            placeholder="请输入密码"
+                            oninput="checkPasswordStrength(this)">
+                    </div>
+                    <div class="mt-1 flex items-center">
+                        <div id="strengthBar" class="strength-bar w-0 h-1 rounded-full transition-all"></div>
+                        <span id="strengthText" class="ml-2 text-xs text-gray-500"></span>
+                    </div>
+                    <p id="password_error" class="mt-1 text-red-500 text-sm hidden"></p>
+                </div>
+
+                <div class="mb-6">
+                    <label for="confirm_password" class="block text-sm font-medium text-gray-700 mb-1">确认密码</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fa fa-lock text-gray-400"></i>
+                        </div>
+                        <input type="password"
+                            id="confirm_password"
+                            class="pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                            placeholder="请再次输入密码"
+                            oninput="checkPasswordMatch()">
+                    </div>
+                    <p id="confirm_password_error" class="mt-1 text-red-500 text-sm hidden"></p>
+                </div>
+
+                <div class="flex flex-col sm:flex-row gap-4">
+                    <button type="submit" id="submitBtn" class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all transform hover:-translate-y-1 active:translate-y-0 flex items-center justify-center shadow-md hover:shadow-lg">
+                        <i class="fa fa-user-plus mr-2"></i>创建账号
+                    </button>
+                    <a href="/admin_manage" class="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-all transform hover:-translate-y-1 active:translate-y-0 flex items-center justify-center shadow-sm hover:shadow">
+                        <i class="fa fa-arrow-left mr-2"></i>返回管理员面板
+                    </a>
+                </div>
+            </form>
+        </div>
+
+    </main>
+
+    <!-- 添加缺失的loadingOverlay元素 -->
+    <div id="loadingOverlay" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white p-6 rounded-lg shadow-xl flex items-center">
+            <div class="spinner-border text-blue-600 mr-3"></div>
+            <span class="text-gray-700">正在处理，请稍候...</span>
+        </div>
+    </div>
+
+    <script>
+        let isUsernameAvailable = false;
+        let isSubmitting = false;
+
+        function handleSubmit(event) {
+            event.preventDefault();
+            if (isSubmitting) return;
+
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirm_password').value;
+
+            // 验证表单
+            const errors = validateForm(username, password, confirmPassword);
+            if (!isUsernameAvailable) {
+                errors.username = '请先验证用户名可用性';
+            }
+
+            if (!showErrors(errors)) return;
+
+            showLoading();
+            isSubmitting = true;
+            document.getElementById('submitBtn').disabled = true;
+
+            // 调用后端创建管理员账号的接口
+            fetch('/api/admin/accounts', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    // 如果需要CSRF保护，添加以下行
+                    // 'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                },
+                body: JSON.stringify({
+                    username,
+                    password
+                })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('创建失败，请重试');
+                }
+                return response.json();
+            })
+            .then(data => {
+                hideLoading();
+                if (data.success) {
+                    alert('管理员账号创建成功！');
+                    resetForm();
+                } else {
+                    showError('username', data.message || '创建失败，请重试');
+                }
+                isSubmitting = false;
+                document.getElementById('submitBtn').disabled = false;
+            })
+            .catch(error => {
+                hideLoading();
+                showError('username', error.message || '网络请求失败，请检查连接');
+                console.error(error);
+                isSubmitting = false;
+                document.getElementById('submitBtn').disabled = false;
+            });
+        }
+
+        function validateForm(username, password, confirmPassword) {
+            const errors = {
+                username: '',
+                password: '',
+                confirm_password: ''
+            };
+
+            if (username.length < 3) {
+                errors.username = '用户名至少需要3个字符';
+            }
+
+            if (password.length < 5) {
+                errors.password = '密码长度至少需要5个字符';
+            }
+
+            if (confirmPassword !== password) {
+                errors.confirm_password = '两次输入的密码不一致';
+            }
+
+            return errors;
+        }
+
+        function checkUsernameAvailability() {
+            const username = document.getElementById('username').value.trim();
+            if (username === '') {
+                showError('username', '用户名不能为空');
+                isUsernameAvailable = false;
+                return;
+            }
+
+            const errorMsg = document.getElementById('username_error');
+            const loadingIndicator = document.getElementById('username_loading');
+
+            loadingIndicator.classList.remove('hidden');
+            errorMsg.classList.add('hidden');
+
+            // 调用后端检查用户名可用性的接口
+            fetch(`/api/admin/check-username?username=${encodeURIComponent(username)}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('校验失败，请重试');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    loadingIndicator.classList.add('hidden');
+                    if (data.available) {
+                        isUsernameAvailable = true;
+                        errorMsg.classList.add('hidden');
+                    } else {
+                        isUsernameAvailable = false;
+                        showError('username', '用户名已存在，请更换');
+                    }
+                })
+                .catch(error => {
+                    loadingIndicator.classList.add('hidden');
+                    showError('username', error.message || '校验失败，请重试');
+                });
+        }
+
+        function checkPasswordMatch() {
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirm_password').value;
+
+            if (confirmPassword !== '' && confirmPassword !== password) {
+                showError('confirm_password', '两次输入的密码不一致');
+            } else {
+                document.getElementById('confirm_password_error').classList.add('hidden');
+            }
+        }
+
+        function showError(field, message) {
+            const errorElement = document.getElementById(`${field}_error`);
+            errorElement.textContent = message;
+            errorElement.classList.remove('hidden');
+            return false;
+        }
+
+        function showErrors(errors) {
+            let isValid = true;
+            Object.keys(errors).forEach(key => {
+                if (errors[key]) {
+                    showError(key, errors[key]);
+                    isValid = false;
+                } else {
+                    document.getElementById(`${key}_error`).classList.add('hidden');
+                }
+            });
+            return isValid;
+        }
+
+        function resetForm() {
+            document.getElementById('createAccountForm').reset();
+            isUsernameAvailable = false;
+            document.getElementById('strengthBar').className = 'strength-bar w-0 h-1 rounded-full transition-all';
+            document.getElementById('strengthText').textContent = '';
+            Array.from(document.querySelectorAll('.text-red-500')).forEach(el => el.classList.add('hidden'));
+        }
+
+        function showLoading() {
+            document.getElementById('loadingOverlay').classList.remove('hidden');
+        }
+
+        function hideLoading() {
+            document.getElementById('loadingOverlay').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>

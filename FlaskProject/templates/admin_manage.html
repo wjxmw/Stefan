@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>管理员操作界面</title>
+    <style>
+        /* 合并样式并优化加载 */
+        :root {
+            --primary: #165DFF;
+            --secondary: #00B42A;
+            --neutral: #F2F3F5;
+            --neutral-dark: #4E5969;
+            --shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Inter", sans-serif;
+            transition: all 0.3s ease;
+        }
+
+        body {
+            background-color: #f0f2f5;
+            line-height: 1.6;
+        }
+
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background: white;
+            box-shadow: var(--shadow);
+            padding: 1rem 2rem;
+            z-index: 1000;
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--primary);
+        }
+
+        .admin-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            color: var(--neutral-dark);
+        }
+
+        main {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 6rem 2rem 2rem;
+            min-height: calc(100vh - 6rem);
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .section-title {
+            font-size: clamp(1.5rem, 3vw, 2.5rem);
+            font-weight: 600;
+            color: #333;
+        }
+
+        .section-desc {
+            color: var(--neutral-dark);
+            margin-top: 0.5rem;
+        }
+
+        .function-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        @media (min-width: 768px) {
+            .function-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .function-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        .function-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            padding: 1.5rem;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .function-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 25px rgba(0,0,0,0.1);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .card-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .card-title {
+            font-size: 1.125rem;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .card-desc {
+            color: var(--neutral-dark);
+            font-size: 0.9rem;
+        }
+
+        .blue-icon { background-color: #e3f2fd; color: var(--primary); }
+        .green-icon { background-color: #e8f5e9; color: var(--secondary); }
+        .purple-icon { background-color: #f3e5f5; color: #7e57c2; }
+        .yellow-icon { background-color: #fffde7; color: #f9a825; }
+        .indigo-icon { background-color: #e8eaf6; color: #3f51b5; }
+        .red-icon { background-color: #ffebee; color: #e53935; }
+
+        /* 动画优化：使用更高效的属性 */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .animated {
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeInUp 0.5s ease forwards;
+        }
+    </style>
+</head>
+<body>
+
+    <main>
+        <div class="section-header">
+            <h2 class="section-title">管理员操作中心</h2>
+            <p class="section-desc">管理学生信息、账号设置和系统配置</p>
+        </div>
+
+        <div class="function-grid">
+            <!-- 添加学生 -->
+            <div class="function-card animated blue-icon" onclick="location.href='/add_student'">
+                <div class="card-header">
+                    <div class="card-icon blue-icon">
+                        <i class="fa fa-user-plus fa-lg"></i>
+                    </div>
+                    <h3 class="card-title">添加学生信息</h3>
+                </div>
+                <p class="card-desc">录入新学生的基本信息和课程信息</p>
+            </div>
+
+            <!-- 编辑学生 -->
+            <div class="function-card animated green-icon" onclick="location.href='/edit_student'">
+                <div class="card-header">
+                    <div class="card-icon green-icon">
+                        <i class="fa fa-pencil fa-lg"></i>
+                    </div>
+                    <h3 class="card-title">编辑学生信息</h3>
+                </div>
+                <p class="card-desc">修改或删除现有学生的个人信息</p>
+            </div>
+
+            <!-- 查询学生 -->
+            <div class="function-card animated purple-icon" onclick="location.href='/view_reports'">
+                <div class="card-header">
+                    <div class="card-icon purple-icon">
+                        <i class="fa fa-search fa-lg"></i>
+                    </div>
+                    <h3 class="card-title">查询学生信息</h3>
+                </div>
+                <p class="card-desc">按条件搜索和查询学生的个人信息</p>
+            </div>
+
+            <!-- 修改密码 -->
+            <div class="function-card animated yellow-icon" onclick="location.href='/admin_change'">
+                <div class="card-header">
+                    <div class="card-icon yellow-icon">
+                        <i class="fa fa-lock fa-lg"></i>
+                    </div>
+                    <h3 class="card-title">修改账号密码</h3>
+                </div>
+                <p class="card-desc">更改当前管理员账号的登录密码</p>
+            </div>
+
+            <!-- 新建账号 -->
+            <div class="function-card animated indigo-icon" onclick="location.href='/create_account'">
+                <div class="card-header">
+                    <div class="card-icon indigo-icon">
+                        <i class="fa fa-user-circle fa-lg"></i>
+                    </div>
+                    <h3 class="card-title">新建管理员账号</h3>
+                </div>
+                <p class="card-desc">创建新的管理员账号</p>
+            </div>
+
+            <!-- 返回首页 -->
+            <div class="function-card animated red-icon" onclick="location.href='/'">
+                <div class="card-header">
+                    <div class="card-icon red-icon">
+                        <i class="fa fa-home fa-lg"></i>
+                    </div>
+                    <h3 class="card-title">返回首页</h3>
+                </div>
+                <p class="card-desc">返回系统首页</p>
+            </div>
+        </div>
+    </main>
+</body>
+</html>
